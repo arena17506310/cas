@@ -1,30 +1,38 @@
-$(document).ready(function () {
-  $("#re_main_button").click(function (e) {
-    e.preventDefault();
-    window.location.href = "../account/ccount.html";
-  });
+<?php
 
-  $(".login-form").submit(function (e) {
-    e.preventDefault();
+$host = '2rrqq2blmvd67pu.sel5.cloudtype.app';
+$db   = 'arena';
+$user = 'finte';
+$pass = 'uranos';
 
-    var username = $("#username").val();
-    var password = $("#password").val();
+$conn = new mysqli($host, $user, $pass, $db);
 
-    // AJAX 요청
-    $.ajax({
-      url: "login.php",
-      type: "POST",
-      data: {
-        username: username,
-        password: password,
-      },
-      success: function (response) {
-        if (response.trim() === "Success") {
-          window.location.href = "../board/main.html"; // 로그인 성공 시 메인 페이지로 리다이렉트
-        } else {
-          alert("로그인 실패 : " + response); // 실패 시 서버의 에러 메시지 출력
-        }
-      },
-    });
-  });
-});
+if ($conn->connect_error) {
+  die('Connection failed: '.$conn->connect_error);
+}
+
+if (!isset($_POST['username']) || !isset($_POST['password'])) {
+  die('Error: Required field is missing');
+}
+
+$username = mysqli_real_escape_string($conn, $_POST['username']);
+$password = mysqli_real_escape_string($conn, $_POST['password']);
+$password = hash('sha256', $_POST['password']); // Hash the password using SHA256
+
+$sql = "SELECT pw FROM accounts WHERE userName=?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $username);
+
+$stmt->execute();
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+
+if ($row && strcmp($row['pw'], $password) === 0) { // Compare the hashed password with the one in the database
+    echo 'Success';
+} else {
+    echo 'Invalid username or password';
+}
+
+$conn->close();
+
+?>
